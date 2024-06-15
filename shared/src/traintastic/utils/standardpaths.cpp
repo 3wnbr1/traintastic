@@ -26,6 +26,10 @@
   #include <shlobj.h>
 #endif
 
+#ifdef __APPLE__
+#include "CoreFoundation/CoreFoundation.h"
+#endif
+
 #ifdef WIN32
 static std::filesystem::path getKnownFolderPath(REFKNOWNFOLDERID rfid)
 {
@@ -50,6 +54,20 @@ std::filesystem::path getLocalAppDataPath()
 }
 #endif
 
+#ifdef __APPLE__
+std::filesystem::path getBundleRessourcesPath()
+{
+  CFBundleRef mainBundle = CFBundleGetMainBundle();
+  CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
+  char path[PATH_MAX];
+  if(CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8*)path, PATH_MAX))
+  {
+    CFRelease(resourcesURL);
+  }
+  return std::filesystem::path(path);
+}
+#endif
+
 std::filesystem::path getLocalePath()
 {
 #if defined(WIN32) && !(defined(__MINGW32__) || defined(__MINGW64__))
@@ -70,6 +88,8 @@ std::filesystem::path getLocalePath()
   return getProgramDataPath() / "traintastic" / "translations";
 #elif defined(__linux__)
   return "/opt/traintastic/translations";
+#elif defined(__APPLE__)
+  return getBundleRessourcesPath() / "translations";
 #else
   return std::filesystem::current_path() / "translations";
 #endif
@@ -99,6 +119,8 @@ std::filesystem::path getLNCVXMLPath()
   return getProgramDataPath() / "traintastic" / "lncv";
 #elif defined(__linux__)
   return "/opt/traintastic/lncv";
+#elif defined(__APPLE__)
+  return getBundleRessourcesPath() / "lncv";
 #else
   return std::filesystem::current_path() / "lncv";
 #endif

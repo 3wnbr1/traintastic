@@ -148,9 +148,9 @@ jobs:
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         windeployqt --release --no-translations -no-system-d3d-compiler --no-opengl-sw ${{github.workspace}}/client/build/${{matrix.config.build_type}}/traintastic-client.exe
 
-    # Linux only:
-    - name: Build debian package
-      if: matrix.config.build_deb
+    # Linux & macOS only:
+    - name: Build package
+      if: matrix.config.build_deb || startswith(matrix.config.os, 'macos')
       working-directory: ${{github.workspace}}/client/build
       run: cpack
 
@@ -169,6 +169,14 @@ jobs:
       with:
         name: traintastic-client-deb-${{matrix.config.name}}
         path: ${{github.workspace}}/client/build/*.deb
+
+    # macOS only:
+    - name: Upload dmg package artifact
+      if: startswith(matrix.config.os, 'macos')
+      uses: actions/upload-artifact@v3
+      with:
+        name: traintastic-client-dmg
+        path: ${{github.workspace}}/client/build/*.dmg
 
   build-server:
     name: server ${{matrix.config.name}}
