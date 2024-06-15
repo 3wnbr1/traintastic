@@ -117,6 +117,8 @@ if(WIN32)
 endif()
 
 if (APPLE)
+  find_library(CORE_FOUNDATION CoreFoundation)
+  target_link_libraries(traintastic-client PRIVATE ${CORE_FOUNDATION})
   target_sources(traintastic-client PRIVATE ../shared/gfx/icon.icns)
   target_sources(traintastic-client PRIVATE ${LNCV_XML_FILES})
   target_sources(traintastic-client PRIVATE ${TRANSLATION_FILES})
