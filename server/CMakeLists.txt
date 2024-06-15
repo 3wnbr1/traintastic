@@ -311,6 +311,14 @@ if(WIN32 AND NOT MSVC)
   endif()
 endif()
 
+if (APPLE)
+  find_library(CORE_FOUNDATION CoreFoundation)
+  target_link_libraries(traintastic-server PRIVATE ${CORE_FOUNDATION})
+  if(BUILD_TESTING)
+    target_link_libraries(traintastic-server-test PRIVATE ${CORE_FOUNDATION})
+  endif()
+endif()
+
 # boost
 find_package(Boost 1.81 REQUIRED COMPONENTS program_options)
 target_include_directories(traintastic-server SYSTEM PRIVATE ${Boost_INCLUDE_DIRS})
@@ -328,6 +336,16 @@ if(BUILD_TESTING)
 endif()
 
 # libarchive
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # Homebrew ships libarchive keg only, include dirs have to be set manually
+    execute_process(
+        COMMAND brew --prefix libarchive
+        OUTPUT_VARIABLE LIBARCHIVE_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND_ERROR_IS_FATAL ANY
+    )
+    set(LibArchive_INCLUDE_DIR "${LIBARCHIVE_PREFIX}/include")
+endif()
 find_package(LibArchive REQUIRED)
 target_link_libraries(traintastic-server PRIVATE LibArchive::LibArchive)
 if(BUILD_TESTING)

@@ -30,6 +30,10 @@ std::filesystem::path getProgramDataPath();
 std::filesystem::path getLocalAppDataPath();
 #endif
 
+#ifdef __APPLE__
+std::filesystem::path getBundleRessourcesPath();
+#endif
+
 std::filesystem::path getLocalePath();
 std::filesystem::path getManualPath();
 std::filesystem::path getLuaManualPath();

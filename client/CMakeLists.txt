@@ -13,6 +13,10 @@ set(CMAKE_AUTOUIC ON)
 
 configure_file(../shared/src/traintastic/version.hpp.in version.hpp)
 
+if(UNIX AND NOT APPLE)
+  set(LINUX TRUE)
+endif()
+
 if(MSVC)
   add_compile_options(/W4)
 else()
@@ -112,6 +116,15 @@ if(WIN32)
   set_property(TARGET traintastic-client PROPERTY WIN32_EXECUTABLE true)
 endif()
 
+if (APPLE)
+  find_library(CORE_FOUNDATION CoreFoundation)
+  target_link_libraries(traintastic-client PRIVATE ${CORE_FOUNDATION})
+  target_sources(traintastic-client PRIVATE ../shared/gfx/icon.icns)
+  target_sources(traintastic-client PRIVATE ${LNCV_XML_FILES})
+  target_sources(traintastic-client PRIVATE ${TRANSLATION_FILES})
+  set_property(TARGET traintastic-client PROPERTY MACOSX_BUNDLE true)
+endif()
+
 ### COMPILER ###
 
 if(MSVC)
@@ -126,6 +139,7 @@ endif()
 ### INSTALL ###
 
 install(TARGETS traintastic-client
+    BUNDLE    DESTINATION .
     COMPONENT traintastic-client
     RUNTIME DESTINATION "/opt/traintastic/bin/"
 )
@@ -147,13 +161,30 @@ if(NOT DEBIAN_PACKAGE_VERSION_EXTRA)
   set(DEBIAN_PACKAGE_VERSION_EXTRA "${PROJECT_VERSION_EXTRA}")
 endif()
 
-set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}${DEBIAN_PACKAGE_VERSION_EXTRA}")
-set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-set(CPACK_DEBIAN_PACKAGE_SECTION "misc")
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Reinder Feenstra")
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://traintastic.org")
-set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "traintastic-data (>= ${CPACK_PACKAGE_VERSION})")
+if (LINUX)
+  set(CPACK_GENERATOR "DEB")
+  set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}${DEBIAN_PACKAGE_VERSION_EXTRA}")
+  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+  set(CPACK_DEBIAN_PACKAGE_SECTION "misc")
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Reinder Feenstra")
+  set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://traintastic.org")
+  set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS "traintastic-data (>= ${CPACK_PACKAGE_VERSION})")
+endif()
+
+# Bundle for macOS
+if (APPLE)
+  set(CPACK_GENERATOR "Bundle")
+  set(CPACK_BUNDLE_NAME "Traintastic")
+
+  set(APP_ICON_MACOS "${CMAKE_CURRENT_SOURCE_DIR}/../shared/gfx/icon.icns")
+  set(CPACK_BUNDLE_ICON ${APP_ICON_MACOS})
+  set_source_files_properties(${APP_ICON_MACOS} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+  set_source_files_properties(${LNCV_XML_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/lncv")
+  set_source_files_properties(${TRANSLATION_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources/translations")
+
+  set(CPACK_BUNDLE_VERSION "${PROJECT_VERSION}${DEBIAN_PACKAGE_VERSION_EXTRA}")
+  set(CPACK_BUNDLE_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/../package/Info.plist")
+endif()
 
 include(CPack)

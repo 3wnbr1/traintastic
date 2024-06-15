@@ -30,26 +30,6 @@ jobs:
           build_deb: true
           defines: ""
 
-        - name: "raspberrypios_arm7"
-          os: [self-hosted, ARM, RaspberryPi]
-          generator: "Unix Makefiles"
-          arch: ""
-          target: traintastic-client
-          jobs: 4
-          build_type: Release
-          build_deb: true
-          defines: "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-
-        - name: "raspberrypios_arm64"
-          os: [self-hosted, ARM64, RaspberryPi]
-          generator: "Unix Makefiles"
-          arch: ""
-          target: traintastic-client
-          jobs: 4
-          build_type: Release
-          build_deb: true
-          defines: "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-
         - name: "macos-13"
           os: "macos-13"
           generator: "Unix Makefiles"
@@ -126,9 +106,9 @@ jobs:
         call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         windeployqt --release --no-translations -no-system-d3d-compiler --no-opengl-sw ${{github.workspace}}/client/build/${{matrix.config.build_type}}/traintastic-client.exe
 
-    # Linux only:
-    - name: Build debian package
-      if: matrix.config.build_deb
+    # Linux & macOS only:
+    - name: Build package
+      if: matrix.config.build_deb || startswith(matrix.config.os, 'macos')
       working-directory: ${{github.workspace}}/client/build
       run: cpack
 
@@ -147,6 +127,14 @@ jobs:
       with:
         name: traintastic-client-deb-${{matrix.config.name}}
         path: ${{github.workspace}}/client/build/*.deb
+
+    # macOS only:
+    - name: Upload dmg package artifact
+      if: startswith(matrix.config.os, 'macos')
+      uses: actions/upload-artifact@v4
+      with:
+        name: traintastic-client-dmg
+        path: ${{github.workspace}}/client/build/*.dmg
 
   build-server:
     name: server ${{matrix.config.name}}
@@ -192,30 +180,6 @@ jobs:
           build_deb: false
           defines: "-DCODE_COVERAGE=ON"
           ccov: true
-
-        - name: "raspberrypios_arm7"
-          os: [self-hosted, ARM, RaspberryPi]
-          generator: "Unix Makefiles"
-          arch: ""
-          toolset: ""
-          target: all
-          jobs: 3
-          build_type: Release
-          build_deb: true
-          defines: "-DINSTALL_SYSTEMD_SERVICE=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-          ccov: false
-
-        - name: "raspberrypios_arm64"
-          os: [self-hosted, ARM64, RaspberryPi]
-          generator: "Unix Makefiles"
-          arch: ""
-          toolset: ""
-          target: all
-          jobs: 3
-          build_type: Release
-          build_deb: true
-          defines: "-DINSTALL_SYSTEMD_SERVICE=ON -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
-          ccov: false
 
         - name: "macos-13"
           os: "macos-13"
@@ -363,10 +327,6 @@ jobs:
         config:
         - name: "ubuntu_24.04"
           os: ubuntu-24.04
-          defines: ""
-
-        - name: "raspberrypios_10"
-          os: [self-hosted, ARM64, RaspberryPi]
           defines: ""
 
     steps:
